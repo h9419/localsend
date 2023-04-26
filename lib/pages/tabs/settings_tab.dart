@@ -6,14 +6,14 @@ import 'package:localsend_app/gen/strings.g.dart';
 import 'package:localsend_app/pages/about_page.dart';
 import 'package:localsend_app/pages/changelog_page.dart';
 import 'package:localsend_app/pages/language_page.dart';
-import 'package:localsend_app/provider/network/server_provider.dart';
+import 'package:localsend_app/provider/network/server/server_provider.dart';
 import 'package:localsend_app/provider/settings_provider.dart';
 import 'package:localsend_app/provider/version_provider.dart';
 import 'package:localsend_app/theme.dart';
-import 'package:localsend_app/util/autostart_helper.dart';
-import 'package:localsend_app/util/platform_check.dart';
+import 'package:localsend_app/util/native/autostart_helper.dart';
+import 'package:localsend_app/util/native/platform_check.dart';
 import 'package:localsend_app/util/sleep.dart';
-import 'package:localsend_app/util/snackbar.dart';
+import 'package:localsend_app/util/ui/snackbar.dart';
 import 'package:localsend_app/widget/custom_dropdown_button.dart';
 import 'package:localsend_app/widget/dialogs/encryption_disabled_notice.dart';
 import 'package:localsend_app/widget/dialogs/quick_save_notice.dart';
@@ -109,7 +109,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                   await ref.read(settingsProvider.notifier).setSaveWindowPlacement(b);
                 },
               ),
-              if (checkPlatform([TargetPlatform.windows, TargetPlatform.macOS])) ...[
+              if (checkPlatformHasTray()) ...[
                 _BooleanEntry(
                   label: t.settingsTab.general.minimizeToTray,
                   value: settings.minimizeToTray,
@@ -159,7 +159,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                 }
               },
             ),
-            if (checkPlatform([TargetPlatform.windows, TargetPlatform.macOS, TargetPlatform.linux]))
+            if (checkPlatformWithFileSystem())
               _SettingsEntry(
                 label: t.settingsTab.receive.destination,
                 child: TextButton(
@@ -228,11 +228,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                           style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.onSurface),
                           onPressed: () async {
                             try {
-                              await ref.read(serverProvider.notifier).startServer(
-                                    alias: settings.alias,
-                                    port: settings.port,
-                                    https: settings.https,
-                                  );
+                              await ref.read(serverProvider.notifier).startServerFromSettings();
                             } catch (e) {
                               context.showSnackBar(e.toString());
                             }
